@@ -1,0 +1,7 @@
+<md-card>
+  <md-card-title (click)="toggleShowContent()">{{programme.Degree2}} {{programme.Programme}}</md-card-title>
+  <md-card-content *ngIf="showContent">
+    <uwi-admissions-requirements-card type="CSEC" [requirements]=extractCSECRequirements()></uwi-admissions-requirements-card>
+    <uwi-admissions-requirements-card type="CAPE" [requirements]=extractCAPERequirements()></uwi-admissions-requirements-card>
+  </md-card-content>
+</md-card>
