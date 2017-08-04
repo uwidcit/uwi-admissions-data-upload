@@ -8,7 +8,10 @@
     "build": "ng build",
     "test": "ng test",
     "lint": "ng lint",
-    "e2e": "ng e2e"
+    "e2e": "ng e2e",
+    "deploy": "ng build && firebase deploy --only hosting", 
+    "functions-build": "tsc -p ./src_functions/tsconfig.json && cp ./src_functions/package.json ./functions/package.json && cd functions && npm i",
+    "functions-deploy": "npm run-functions-build && firebase deploy --only functions"
   },
   "private": true,
   "dependencies": {
