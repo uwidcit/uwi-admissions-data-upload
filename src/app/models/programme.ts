@@ -25,7 +25,7 @@ export interface Programme {
     CAPEAny4of: string;
     CAPEAny5of: string;
 
-    AlternateQualifications: string;
+    AlternativeQualifications: string;
     OtherRequirements: string;
 }
 

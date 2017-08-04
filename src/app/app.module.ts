@@ -4,7 +4,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AngularFireModule } from 'angularfire2';
 import { AngularFireDatabaseModule } from 'angularfire2/database';
 import { AngularFireAuthModule } from 'angularfire2/auth';
-import { MdCardModule, MdButtonModule } from '@angular/material';
+import { MdCardModule, MdButtonModule, MdInputModule, MdTableModule } from '@angular/material';
+import { CdkTableModule } from "@angular/cdk"
 import { PapaParseModule, PapaParseService } from 'ngx-papaparse';
 import { environment } from '../environments/environment';
 import { AppComponent } from './app.component';
@@ -22,6 +23,9 @@ import { RequirementsCardComponent } from './components/requirements-card/requir
     BrowserAnimationsModule,
     MdCardModule,
     MdButtonModule,
+    MdInputModule,
+    CdkTableModule,
+    MdTableModule,
     AngularFireModule.initializeApp(environment.firebase),
     AngularFireDatabaseModule,
     AngularFireAuthModule,

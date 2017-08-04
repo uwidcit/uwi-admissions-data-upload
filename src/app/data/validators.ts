@@ -1,5 +1,5 @@
-import { Row } from './row'
-import { ColumnError, RowError, REASON_MISSING_VALUE, REASON_INVALID_VALUE} from './errors'
+import { Row } from '../models/row'
+import { ColumnError, RowError, REASON_MISSING_VALUE, REASON_INVALID_VALUE} from '../models/errors'
 
 interface ValidateFunction{
   (fieldNumber: number, fieldName: string, value: string): ColumnError;
@@ -52,6 +52,12 @@ export class RowValidator {
     return null; //All fields have errors (assuming missing value error) so the required doesn't matter
   }
 
+  /**
+   * Validate that the row meets valid criteria
+   * @param rowNum The number of the row in the in the CSV file
+   * @param row The row to validate
+   * @returns A RowError object of the errors or null if no errors exist
+   */
   public static validateRow(rowNum: number, row: Row): RowError {
     let columnErrors: ColumnError[] = [];
 
