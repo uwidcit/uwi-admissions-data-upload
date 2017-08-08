@@ -14,7 +14,8 @@
     "e2e": "ng e2e",
     "deploy": "npm run build && firebase deploy",
     "deploy-hosting": "npm run build-hosting && firebase deploy --only hosting",
-    "deploy-functions": "npm run build-functions && firebase deploy --only functions"
+    "deploy-functions": "npm run build-functions && firebase deploy --only functions",
+    "clean": "rm -rf dist functions"
   },
   "private": true,
   "dependencies": {
