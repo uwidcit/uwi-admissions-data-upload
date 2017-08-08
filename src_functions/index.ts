@@ -32,30 +32,30 @@ function cleanProgrammeValues(programme: Programme) : Programme{
  */
 function createProgrammeFromRow(row: Row): Programme {
   let programme = 
-          {Degree1:                    row[ 0],
-          Degree2:                    row[ 1],
-          Programme:                  row[ 2],
-          Faculty:                    row[ 3],
-          FullTime: !!Number.parseInt(row[ 4]),
-          PartTime: !!Number.parseInt(row[ 5]),
-          Evening:  !!Number.parseInt(row[ 6]),
-          CSECPasses: Number.parseInt(row[ 7]),
-          CSECMandatory:              row[ 8],
-          CSECAny1of:                 row[ 9],
-          CSECAny2of:                 row[10],
-          CSECAny3of:                 row[11],
-          CSECAny4of:                 row[12],
-          CSECAny5of:                 row[13],
-          CAPEPasses: Number.parseInt(row[14]),
-          CAPEMandatory:              row[15],
-          CAPEAny1of:                 row[16],
-          CAPEAny2of :                row[17],
-          CAPEAny3of:                 row[18],
-          CAPEAny4of:                 row[19],
-          CAPEAny5of:                 row[20],
-          AlternativeQualifications:  row[21],
-          OtherRequirements:          row[22],
-          Description:                row[23]};
+     {Degree1:                    row[ 0],
+      Degree2:                    row[ 1],
+      Programme:                  row[ 2],
+      Faculty:                    row[ 3],
+      FullTime: !!Number.parseInt(row[ 4]),
+      PartTime: !!Number.parseInt(row[ 5]),
+      Evening:  !!Number.parseInt(row[ 6]),
+      CSECPasses: Number.parseInt(row[ 7]),
+      CSECMandatory:              row[ 8],
+      CSECAny1of:                 row[ 9],
+      CSECAny2of:                 row[10],
+      CSECAny3of:                 row[11],
+      CSECAny4of:                 row[12],
+      CSECAny5of:                 row[13],
+      CAPEPasses: Number.parseInt(row[14]),
+      CAPEMandatory:              row[15],
+      CAPEAny1of:                 row[16],
+      CAPEAny2of :                row[17],
+      CAPEAny3of:                 row[18],
+      CAPEAny4of:                 row[19],
+      CAPEAny5of:                 row[20],
+      AlternativeQualifications:  row[21],
+      OtherRequirements:          row[22],
+      Description:                row[23]};
   return cleanProgrammeValues(programme);
 }
 
@@ -123,3 +123,14 @@ expressApp.post('/upload_csv', multer.single('csv'), (request, response, next) =
 
 exports.uploadCSV_https = functions.https.onRequest(expressApp);
 
+exports.newUser = functions.auth.user().onCreate(event => {
+    let user = event.data;
+    let { uid, email } = user;
+
+    let userRef = database.ref(`/users/${uid}`);
+    return userRef.update({
+      uid: uid,
+      emial: email,
+      name: `User ${uid}`
+    });
+  });
