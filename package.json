@@ -4,14 +4,17 @@
   "license": "MIT",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
+    "serve": "ng serve",
+    "serve-firebase": "npm run build && firebase serve --only hosting,functions", 
+    "build": "npm run build-hosting && npm run build-functions",
+    "build-hosting": "ng build",
+    "build-functions": "tsc -p ./src_functions/tsconfig.json && cp ./src_functions/package.json ./functions/package.json && cd functions && npm i",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "deploy": "ng build && firebase deploy --only hosting", 
-    "functions-build": "tsc -p ./src_functions/tsconfig.json && cp ./src_functions/package.json ./functions/package.json && cd functions && npm i",
-    "functions-deploy": "npm run-functions-build && firebase deploy --only functions"
+    "deploy": "npm run build && firebase deploy",
+    "deploy-hosting": "npm run build-hosting && firebase deploy --only hosting",
+    "deploy-functions": "npm run build-functions && firebase deploy --only functions"
   },
   "private": true,
   "dependencies": {

@@ -1,5 +1,9 @@
 {
   "hosting": {
-    "public": "dist"
+    "public": "dist",
+    "rewrites": [{
+      "source": "/upload_csv",
+      "function": "uploadCSV_https"
+    }]
   }
 }

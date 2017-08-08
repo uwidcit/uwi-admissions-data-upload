@@ -1,4 +1,4 @@
-<div id="uploadBox" (click)="triggerUploadDialog()">
+<div id="uploadForm" (click)="triggerUploadDialog($event)">
   <label for="upload"><button md-raised-button id="uploadSubmit">Upload File</button></label>
   <input id="upload" name="upload" type="file" accept=".csv" (change)="uploadFile($event)">
 </div>

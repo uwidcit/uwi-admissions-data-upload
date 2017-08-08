@@ -1,16 +1,22 @@
-import * as functions  from 'firebase-functions'
-import * as admin from 'firebase-admin'
+const functions = require('firebase-functions');
+const admin = require('firebase-admin');
 admin.initializeApp(functions.config().firebase);
 const database = admin.database();
 const gcs = require('@google-cloud/storage')();
-import * as fs from 'mz/fs';
+const fs = require('mz/fs');
 const papaParse = require('papaparse');
+const expressApp = require('express')();
+const multer = require('multer')({dest: '/tmp/'});
 
 import { Row } from './models/row'
 import { Programme } from './models/programme';
 import { RowError } from './models/errors'
 import { RowValidator } from './validators/validators'
 
+/**
+ * Remove any NaN from the programme since they can't be put in Firebase
+ * @param programme The programme to be cleanned
+ */
 function cleanProgrammeValues(programme: Programme) : Programme{
   for(let x in programme) {
     if(typeof(programme[x]) === 'string') continue;
@@ -53,7 +59,43 @@ function createProgrammeFromRow(row: Row): Programme {
   return cleanProgrammeValues(programme);
 }
 
-exports.parseCSV = functions.storage.object().onChange(event => {
+/**
+ * Parse the csv
+ * @param csv 
+ */
+function parseCSV(csv: string){
+  papaParse.parse(csv, {
+    complete: (result) => {
+      let rows = result.data;
+      // console.log('Headings', rows[0]);
+      let programmes: Programme[] = [];
+      let rowErrors: RowError[] = [];
+      for(let i = 1, row = rows[i], end = rows.length - 1; i < end; i++, row = rows[i]){
+        let rowError = RowValidator.validateRow(i + 1, row);
+        if(rowError === null){
+          let programme = createProgrammeFromRow(row);
+          programmes.push(cleanProgrammeValues(programme));
+        }else{
+          rowErrors.push(rowError);
+        }
+      }
+      // console.log(programmes, rowErrors);
+      let rootRef = database.ref('/'), programmesRef = rootRef.child('/Programmes'), rowErrorsRef = rootRef.child('/RowErrors');
+      // programmesRef.remove();
+      // rowErrorsRef.remove()
+      return rootRef.update({
+        Programmes: programmes,
+        RowErrors: rowErrors,
+        updateTime: Date.now()
+      });
+    }
+  });
+}
+
+/**
+ * Handle the file being uploaded to Firebase Storage
+ */
+exports.uploadCSV_storage = functions.storage.object().onChange(event => {
   let object = event.data;
   let filePath = object.name;
   let fileName = filePath.split('/').pop();
@@ -64,37 +106,20 @@ exports.parseCSV = functions.storage.object().onChange(event => {
   if(object.contentType !== 'application/vnd.ms-excel') return;
   if(object.resourceState === 'not_exists') return;
 
-  return bucket.file(filePath).download({
-    destination: tempFilePath
-  })
-  .then(() => {
-    return fs.readFile(tempFilePath, {encoding: 'utf-8'});
-  })
-  .then(csv => {
-    papaParse.parse(csv, {
-      complete: (result) => {
-        let rows = result.data;
-        // console.log('Headings', rows[0]);
-        let programmes: Programme[] = [];
-        let rowErrors: RowError[] = [];
-        for(let i = 1, row = rows[i], end = rows.length - 1; i < end; i++, row = rows[i]){
-          let rowError = RowValidator.validateRow(i + 1, row);
-          if(rowError === null){
-            let programme = createProgrammeFromRow(row);
-            programmes.push(cleanProgrammeValues(programme));
-          }else{
-            rowErrors.push(rowError);
-          }
-        }
-        // console.log(programmes, rowErrors);
-        let rootRef = database.ref('/'), programmesRef = rootRef.child('/Programmes'), rowErrorsRef = rootRef.child('/RowErrors');
-        // programmesRef.remove();
-        // rowErrorsRef.remove()
-        return rootRef.update({
-          Programmes: programmes,
-          RowErrors: rowErrors
-        });
-      }
-    });
-  });
+  return bucket.file(filePath).download({destination: tempFilePath})
+  .then(() => fs.readFile(tempFilePath, {encoding: 'utf-8'}))
+  .then(csv => parseCSV(csv));
 });
+
+/**
+ * Handle the file being uploaded via the upload form
+ */
+expressApp.post('/upload_csv', multer.single('csv'), (request, response, next) => {
+  let csv = request.file;
+  let name = `${csv.destination}${csv.filename}`;
+  return fs.readFile(name, {encoding: 'utf8'})
+  .then(csv => parseCSV(csv));
+});
+
+exports.uploadCSV_https = functions.https.onRequest(expressApp);
+

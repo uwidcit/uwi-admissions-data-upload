@@ -6,9 +6,7 @@ import 'rxjs/add/operator/debounceTime';
 import 'rxjs/add/operator/distinctUntilChanged';
 import 'rxjs/add/observable/fromEvent';
 import { Programme, Requirements } from './models/programme';
-import { Row } from './models/row'
-import { RowError, ColumnError } from './models/errors'
-import { RowValidator } from './data/validators'
+import { RowError } from './models/errors'
 import { ProgrammeDataSource } from './data/data-source'
 
 @Component({
@@ -22,7 +20,7 @@ export class AppComponent implements OnInit{
   private displayedColumns = ['Degree1', 'Degree2', 'Programme', 'Faculty', 'FullTime', 'PartTime', 'Evening', 'CXCPasses', 'CAPEPasses', 'AlternativeQualifications', 'OtherRequirements', 'Description'];
   private programmes: FirebaseListObservable<Programme[]>;
   private rowErrors: FirebaseListObservable<RowError[]>;
-  private fileUploadBox: HTMLInputElement;
+  private fileUpload: HTMLInputElement;
   @ViewChild('filter') filter: ElementRef;
   
   constructor(private database: AngularFireDatabase, private papa: PapaParseService){
@@ -35,7 +33,7 @@ export class AppComponent implements OnInit{
   }
 
   ngOnInit(){
-    this.fileUploadBox = document.querySelector('#upload') as HTMLInputElement;
+    this.fileUpload = document.querySelector('#upload') as HTMLInputElement;
 
     Observable.fromEvent(this.filter.nativeElement, 'keyup')
         .debounceTime(150)
@@ -47,84 +45,22 @@ export class AppComponent implements OnInit{
   }
 
   /**
-   * Produce a Programme object from a row of the CSV file
-   * @param row A row from the CSV file
-   * @returns A Programme object based on the row passed in
-   */
-  private createProgrammeFromRow(row: Row): Programme {
-    return {Degree1:                    row[ 0],
-            Degree2:                    row[ 1],
-            Programme:                  row[ 2],
-            Faculty:                    row[ 3],
-            FullTime: !!Number.parseInt(row[ 4]),
-            PartTime: !!Number.parseInt(row[ 5]),
-            Evening:  !!Number.parseInt(row[ 6]),
-            CSECPasses: Number.parseInt(row[ 7]),
-            CSECMandatory:              row[ 8],
-            CSECAny1of:                 row[ 9],
-            CSECAny2of:                 row[10],
-            CSECAny3of:                 row[11],
-            CSECAny4of:                 row[12],
-            CSECAny5of:                 row[13],
-            CAPEPasses: Number.parseInt(row[14]),
-            CAPEMandatory:              row[15],
-            CAPEAny1of:                 row[16],
-            CAPEAny2of :                row[17],
-            CAPEAny3of:                 row[18],
-            CAPEAny4of:                 row[19],
-            CAPEAny5of:                 row[20],
-            AlternativeQualifications:  row[21],
-            OtherRequirements:          row[22],
-            Description:                row[23]};
-  }
-
-  /**
    * Open the file selector for the file upload box
    */
-  private triggerUploadDialog(){
-    let fileUpload: any = document.querySelector('#upload');
-    fileUpload.click();
+  private triggerUploadDialog(event: MouseEvent){
+    this.fileUpload.click();
   }
 
   /**
    * Upload the CSV file and produce Programmes to be put in the database 
    */
-  private uploadFile(event: MouseEvent){
-    let file = this.fileUploadBox.files[0];
-    this.papa.parse(file, {
-      complete: (result: PapaParseResult) => {
-        let rows = result.data;
-        //console.log('Headings', rows[0]);
-        let programmes: Programme[] = [];
-        let rowErrors: RowError[] = [];
-        for(let i = 1, row = rows[i], end = rows.length - 1; i < end; i++, row = rows[i]){
-          let rowError = RowValidator.validateRow(i + 1, row);
-          if(rowError === null){
-            let programme = this.createProgrammeFromRow(row);
-            programmes.push(this.cleanProgrammeValues(programme));
-          }else{
-            rowErrors.push(rowError);
-          }
-        }
-        //console.log(programmes, rowErrors);
-        this.updateProgammesInDatabase(programmes, rowErrors);
-      }
+  private uploadFile(event: Event){
+    let form = new FormData();
+    form.append('csv', this.fileUpload.files[0]);
+    fetch('/upload_csv', {
+      method: "POST",
+      body: form
     });
-  }
-
-  private cleanProgrammeValues(programme: Programme) : Programme{
-    for(let x in programme) {
-      if(typeof(programme[x]) === 'string') continue;
-      else if(isNaN(programme[x])) delete programme[x];
-    }
-    return programme;
-  }
-
-  private updateProgammesInDatabase(programmes: Programme[], rowErrors: RowError[]){
-    this.programmes.remove();
-    for(let programme of programmes) this.programmes.push(programme);
-    this.rowErrors.remove()
-    for(let rowError of rowErrors) this.rowErrors.push(rowError);
   }
 
   private extractRequirements(programme: Programme, type: string) : Requirements { 
