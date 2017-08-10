@@ -1,10 +1,9 @@
-const functions = require('firebase-functions');
-const admin = require('firebase-admin');
+import * as functions from 'firebase-functions';
+import * as admin from 'firebase-admin';
 admin.initializeApp(functions.config().firebase);
 const database = admin.database();
 const gcs = require('@google-cloud/storage')();
 const fs = require('mz/fs');
-const papaParse = require('papaparse');
 const expressApp = require('express')();
 const multer = require('multer')({dest: '/tmp/'});
 
@@ -63,32 +62,31 @@ function createProgrammeFromRow(row: Row): Programme {
  * Parse the csv
  * @param csv 
  */
-function parseCSV(csv: string){
-  papaParse.parse(csv, {
-    complete: (result) => {
-      let rows = result.data;
-      // console.log('Headings', rows[0]);
-      let programmes: Programme[] = [];
-      let rowErrors: RowError[] = [];
-      for(let i = 1, row = rows[i], end = rows.length - 1; i < end; i++, row = rows[i]){
-        let rowError = RowValidator.validateRow(i + 1, row);
-        if(rowError === null){
-          let programme = createProgrammeFromRow(row);
-          programmes.push(cleanProgrammeValues(programme));
-        }else{
-          rowErrors.push(rowError);
-        }
+function parseCSV(csv: string) : Promise<void>{
+  return Promise.resolve(csv.split('\r\n'))
+  .then(rowsString => rowsString.map(rowString => rowString.split(',')))
+  .then(rows => {
+    // console.log('Headings', rows[0]);
+    let programmes: Programme[] = [];
+    let rowErrors: RowError[] = [];
+    for(let i = 1, row = rows[i], end = rows.length - 1; i < end; i++, row = rows[i]){
+      let rowError = RowValidator.validateRow(i + 1, row);
+      if(rowError === null){
+        let programme = createProgrammeFromRow(row);
+        programmes.push(cleanProgrammeValues(programme));
+      }else{
+        rowErrors.push(rowError);
       }
-      // console.log(programmes, rowErrors);
-      let rootRef = database.ref('/'), programmesRef = rootRef.child('/Programmes'), rowErrorsRef = rootRef.child('/RowErrors');
-      // programmesRef.remove();
-      // rowErrorsRef.remove()
-      return rootRef.update({
-        Programmes: programmes,
-        RowErrors: rowErrors,
-        updateTime: Date.now()
-      });
     }
+    // console.log(programmes, rowErrors);
+    let rootRef = database.ref('/'), programmesRef = rootRef.child('/Programmes'), rowErrorsRef = rootRef.child('/RowErrors');
+    // programmesRef.remove();
+    // rowErrorsRef.remove()
+    return rootRef.update({
+      Programmes: programmes,
+      RowErrors: rowErrors,
+      updateTime: Date.now()
+    });
   });
 }
 
@@ -118,7 +116,8 @@ expressApp.post('/upload_csv', multer.single('csv'), (request, response, next) =
   let csv = request.file;
   let name = `${csv.destination}${csv.filename}`;
   return fs.readFile(name, {encoding: 'utf8'})
-  .then(csv => parseCSV(csv));
+  .then(csv => parseCSV(csv))
+  .then(() => response.send());
 });
 
 exports.uploadCSV_https = functions.https.onRequest(expressApp);

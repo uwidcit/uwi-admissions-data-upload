@@ -1,2 +1,1 @@
-export interface Row extends Array<string>{
-}
+export type Row = string[];
