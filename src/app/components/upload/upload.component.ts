@@ -1,13 +1,15 @@
-import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { AngularFireDatabase, FirebaseListObservable } from 'angularfire2/database';
 import { PapaParseService, PapaParseResult } from 'ngx-papaparse';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/debounceTime';
 import 'rxjs/add/operator/distinctUntilChanged';
 import 'rxjs/add/observable/fromEvent';
+import { NgTableComponent } from 'ng2-expanding-table'
 import { Programme, Requirements } from '../../models/programme';
-import { RowError } from '../../models/errors'
-import { ProgrammeDataSource } from '../../data/data-source'
+import { RowError } from '../../models/errors';
+import { ProgrammeDataSource } from '../../data/data-source';
+import { RowContentComponent } from './row-content.component'
 
 @Component({
   selector: 'uwi-admissions-upload',
@@ -16,32 +18,53 @@ import { ProgrammeDataSource } from '../../data/data-source'
 })
 export class UploadComponent implements OnInit {
 
-  private programmesDataSource: ProgrammeDataSource;
-  private displayedColumns = ['Degree1', 'Degree2', 'Programme', 'Faculty', 'FullTime', 'PartTime', 'Evening', 'CXCPasses', 'CAPEPasses', 'AlternativeQualifications', 'OtherRequirements', 'Description'];
   private programmes: FirebaseListObservable<Programme[]>;
   private rowErrors: FirebaseListObservable<RowError[]>;
   private fileUpload: HTMLInputElement;
-  @ViewChild('filter') filter: ElementRef;
+  @ViewChild('table') table: NgTableComponent;
+
+  private tableConfig = {
+    className: ['table-striped', 'table-bordered']
+  };
+  private columns = [
+    {title: "Degree", name: "Degree1"},
+    {title: "Level", name: "Degree2"},
+    {title: "Programme", name: "Programme"},
+    {title: "Faculty", name: "Faculty"},
+    {title: "Full Time", name: "FullTime"},
+    {title: "Part Time", name: "PartTime"},
+    {title: "Evening", name: "Evening"},
+    {title: "CSEC Passes", name: "CSECPasses"},
+    {title: "CAPE Passes", name: "CAPEPasses"},
+    {title: "Other Requirements", name: "OtherRequirements"},
+    {title: "Alternative Qualifications", name: "AlternativeQualifications"},
+    {title: "Description", name: "Description"},
+  ];
+  private rowComponent = RowContentComponent;
+  private selectedRow = {
+    CSECPasses: 0,
+    CSECMandatory: '',
+    CSECAny1Of: '',
+    CSECAny2Of: '',
+    CSECAny3Of: '',
+    CSECAny4Of: '',
+    CSECAny5Of: '',
+    CAPEPasses: 0,
+    CAPEMandatory: '',
+    CAPEAny1Of: '',
+    CAPEAny2Of: '',
+    CAPEAny3Of: '',
+    CAPEAny4Of: '',
+    CAPEAny5Of: '',
+  };
   
   constructor(private database: AngularFireDatabase, private papa: PapaParseService){
-    this.programmesDataSource = new ProgrammeDataSource();
     this.programmes = database.list('/Programmes');
-    this.programmes.subscribe((programmes: Programme[]) => {
-      this.programmesDataSource.programmes = programmes;
-    });
     this.rowErrors = database.list('/RowErrors');
   }
 
   ngOnInit(){
     this.fileUpload = document.querySelector('#upload') as HTMLInputElement;
-
-    Observable.fromEvent(this.filter.nativeElement, 'keyup')
-        .debounceTime(150)
-        .distinctUntilChanged()
-        .subscribe(() => {
-          if (this.programmesDataSource) 
-              this.programmesDataSource.filter = this.filter.nativeElement.value;
-        });
   }
 
   /**
@@ -63,25 +86,30 @@ export class UploadComponent implements OnInit {
     });
   }
 
-  private extractRequirements(programme: Programme, type: string) : Requirements { 
-      return {
-          type: type,
-          Passes: programme[type + 'Passes'],
-          Mandatory: programme[type + 'Mandatory'],
-          Any1of: programme[type + 'Any1of'],
-          Any2of: programme[type + 'Any2of'],
-          Any3of: programme[type + 'Any3of'],
-          Any4of: programme[type + 'Any4of'],
-          Any5of: programme[type + 'Any5sof'],
-      };
-  }
+  /**
+   * Set the data that will be show in the expanded row
+   * @param data 
+   */
+  private exapndRow(data){
+    console.log(data);
+    if(data === undefined || data.row === undefined) return;
+    let row = data.row;
 
-  private extractCSECRequirements(programme: Programme) : Requirements {
-      return this.extractRequirements(programme, 'CSEC');
-  }
+    this.selectedRow.CSECPasses = row.CSECPasses;
+    this.selectedRow.CSECMandatory = row.CSECMandatory;
+    this.selectedRow.CSECAny1Of = row.CSECAny1of;
+    this.selectedRow.CSECAny2Of = row.CSECAny2of;
+    this.selectedRow.CSECAny3Of = row.CSECAny3of;
+    this.selectedRow.CSECAny4Of = row.CSECAny4of;
+    this.selectedRow.CSECAny5Of = row.CSECAny5of;
 
-  private extractCAPERequirements(programme: Programme) : Requirements {
-      return this.extractRequirements(programme, 'CAPE');
+    this.selectedRow.CAPEPasses = row.CAPEPasses;
+    this.selectedRow.CAPEMandatory = row.CAPEMandatory;
+    this.selectedRow.CAPEAny1Of = row.CAPEAny1of;
+    this.selectedRow.CAPEAny2Of = row.CAPEAny2of;
+    this.selectedRow.CAPEAny3Of = row.CAPEAny3of;
+    this.selectedRow.CAPEAny4Of = row.CAPEAny4of;
+    this.selectedRow.CAPEAny5Of = row.CAPEAny5of;
   }
 
 }

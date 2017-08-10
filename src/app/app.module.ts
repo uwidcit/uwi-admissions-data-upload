@@ -6,15 +6,14 @@ import { FormsModule }   from '@angular/forms';
 import { AngularFireModule } from 'angularfire2';
 import { AngularFireDatabaseModule } from 'angularfire2/database';
 import { AngularFireAuthModule } from 'angularfire2/auth';
-import { MdCardModule, MdButtonModule, MdInputModule, MdTableModule } from '@angular/material';
-import { CdkTableModule } from "@angular/cdk"
+import { MdCardModule, MdButtonModule, MdInputModule, MdToolbarModule } from '@angular/material';
 import { PapaParseModule, PapaParseService } from 'ngx-papaparse';
+import { NG_TABLE_DIRECTIVES } from 'ng2-expanding-table';
 import { environment } from '../environments/environment';
 import { AppComponent } from './app.component';
-import { DegreeCardComponent } from './components/degree-card/degree-card.component';
-import { RequirementsCardComponent } from './components/requirements-card/requirements-card.component';
 import { LoginComponent } from './components/login/login.component';
 import { UploadComponent } from './components/upload/upload.component';
+import { RowContentComponent } from './components/upload/row-content.component'
 import { CanActivateViaFirebaseAuth } from './guards/gaurds';
 
 const routes: Route[] = [
@@ -24,11 +23,11 @@ const routes: Route[] = [
 
 @NgModule({
   declarations: [
+    NG_TABLE_DIRECTIVES,
     AppComponent,
-    DegreeCardComponent,
-    RequirementsCardComponent,
     LoginComponent,
     UploadComponent,
+    RowContentComponent
   ],
   imports: [
     BrowserModule,
@@ -37,13 +36,15 @@ const routes: Route[] = [
     MdCardModule,
     MdButtonModule,
     MdInputModule,
-    CdkTableModule,
-    MdTableModule,
+    MdToolbarModule,
     FormsModule,
     AngularFireModule.initializeApp(environment.firebase),
     AngularFireDatabaseModule,
     AngularFireAuthModule,
     PapaParseModule
+  ],
+  entryComponents: [
+    RowContentComponent
   ],
   providers: [PapaParseService, CanActivateViaFirebaseAuth],
   bootstrap: [AppComponent]
