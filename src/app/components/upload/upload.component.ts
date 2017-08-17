@@ -1,14 +1,8 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { AngularFireDatabase, FirebaseListObservable } from 'angularfire2/database';
-import { PapaParseService, PapaParseResult } from 'ngx-papaparse';
-import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/operator/debounceTime';
-import 'rxjs/add/operator/distinctUntilChanged';
-import 'rxjs/add/observable/fromEvent';
 import { NgTableComponent } from 'ng2-expanding-table'
 import { Programme, Requirements } from '../../models/programme';
 import { RowError } from '../../models/errors';
-import { ProgrammeDataSource } from '../../data/data-source';
 import { RowContentComponent } from './row-content.component'
 
 @Component({
@@ -58,7 +52,7 @@ export class UploadComponent implements OnInit {
     CAPEAny5Of: '',
   };
   
-  constructor(private database: AngularFireDatabase, private papa: PapaParseService){
+  constructor(private database: AngularFireDatabase){
     this.programmes = database.list('/Programmes');
     this.rowErrors = database.list('/RowErrors');
   }

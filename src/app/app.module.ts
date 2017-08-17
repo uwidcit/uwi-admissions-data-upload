@@ -7,7 +7,6 @@ import { AngularFireModule } from 'angularfire2';
 import { AngularFireDatabaseModule } from 'angularfire2/database';
 import { AngularFireAuthModule } from 'angularfire2/auth';
 import { MdCardModule, MdButtonModule, MdInputModule, MdToolbarModule } from '@angular/material';
-import { PapaParseModule, PapaParseService } from 'ngx-papaparse';
 import { NG_TABLE_DIRECTIVES } from 'ng2-expanding-table';
 import { environment } from '../environments/environment';
 import { AppComponent } from './app.component';
@@ -40,13 +39,12 @@ const routes: Route[] = [
     FormsModule,
     AngularFireModule.initializeApp(environment.firebase),
     AngularFireDatabaseModule,
-    AngularFireAuthModule,
-    PapaParseModule
+    AngularFireAuthModule
   ],
   entryComponents: [
     RowContentComponent
   ],
-  providers: [PapaParseService, CanActivateViaFirebaseAuth],
+  providers: [CanActivateViaFirebaseAuth],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
