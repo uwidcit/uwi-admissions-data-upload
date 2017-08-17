@@ -4,6 +4,7 @@ admin.initializeApp(functions.config().firebase);
 const database = admin.database();
 const gcs = require('@google-cloud/storage')();
 const fs = require('mz/fs');
+const babyParse = require('babyparse');
 const expressApp = require('express')();
 const multer = require('multer')({dest: '/tmp/'});
 
@@ -63,8 +64,8 @@ function createProgrammeFromRow(row: Row): Programme {
  * @param csv 
  */
 function parseCSV(csv: string) : Promise<void>{
-  return Promise.resolve(csv.split('\r\n'))
-  .then(rowsString => rowsString.map(rowString => rowString.split(',')))
+  return Promise.resolve(babyParse.parse(csv))
+  .then(parsed => parsed.data)
   .then(rows => {
     // console.log('Headings', rows[0]);
     let programmes: Programme[] = [];
