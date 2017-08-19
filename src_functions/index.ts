@@ -123,9 +123,13 @@ exports.uploadCSVPostProcess = functions.database.ref('/Programmes').onWrite(eve
   let programmes: Programme[] = event.data.val();
   let updates = {};
 
-  const addToUpdates = (subject: string, key: string, programme: Programme) => {
-    if(updates[subject] === undefined) updates[subject] = {};
-    updates[subject][key] = programme;  
+  const addToUpdates = (prefix: string, subject: string, key: string, programme: Programme) => {
+    let splits = subject.split(' or ');
+    for(let split of splits){
+      let updateKey= `${prefix}_${split}`;
+      if(updates[updateKey] === undefined) updates[updateKey] = {};
+      updates[updateKey][key] = programme;
+    }
   };
   
   for(let programme of programmes){
@@ -139,8 +143,7 @@ exports.uploadCSVPostProcess = functions.database.ref('/Programmes').onWrite(eve
     .concat(programme.CSECAny5of.split(','))
     .map(subject => subject.trim().replace('.', ''))
     .filter(subject => subject)
-    .map(subject => `CSEC_${subject}`)
-    .forEach(subject => addToUpdates(subject, programmeKey, programme));
+    .forEach(subject => addToUpdates('CSEC', subject, programmeKey, programme));
 
     programme.CAPEMandatory.split(',')
     .concat(programme.CAPEAny1of.split(','))
@@ -150,8 +153,7 @@ exports.uploadCSVPostProcess = functions.database.ref('/Programmes').onWrite(eve
     .concat(programme.CAPEAny5of.split(','))
     .map(subject => subject.trim().replace('.', ''))
     .filter(subject => subject)
-    .map(subject => `CAPE_${subject}`)
-    .forEach(subject => addToUpdates(subject, programmeKey, programme));
+    .forEach(subject => addToUpdates('CAPE', subject, programmeKey, programme));
   }
 
   return database.ref('/search').set(updates);
