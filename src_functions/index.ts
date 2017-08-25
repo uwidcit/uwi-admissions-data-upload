@@ -117,54 +117,46 @@ expressApp.post('/upload_csv', multer.single('csv'), (request, response, next) =
 
 exports.uploadCSV_https = functions.https.onRequest(expressApp);
 
+function makeSearchIndex(type: string, programme: Programme, search: object) : object {
+  let programmeKey = programme.Faculty + programme.Degree2 + programme.Programme;
+  return programme[`${type}Mandatory`].split(',')
+  .concat(programme[`${type}Any1of`].split(','))
+  .concat(programme[`${type}Any1of`].split(','))
+  .concat(programme[`${type}Any1of`].split(','))
+  .concat(programme[`${type}Any1of`].split(','))
+  .concat(programme[`${type}Any1of`].split(','))
+  .map(subject => subject.trim().replace('.', ''))
+  .filter(subject => subject)
+  .reduce((search, subject) => {
+    subject.split(' or ').forEach(split => {
+      let subjectKey = `${type}_${split}`;
+      if(search[subjectKey] === undefined) search[subjectKey] = {};
+      search[subjectKey][programmeKey] = programme;
+    });
+    return search;
+  }, search);
+}
+
 exports.uploadCSVPostProcess = functions.database.ref('/Programmes').onWrite(event => {
   if(!event.data.exists()) return;
 
   let programmes: Programme[] = event.data.val();
-  let updates = {};
+  let search = {};
 
-  const addToUpdates = (prefix: string, subject: string, key: string, programme: Programme) => {
-    let splits = subject.split(' or ');
-    for(let split of splits){
-      let updateKey= `${prefix}_${split}`;
-      if(updates[updateKey] === undefined) updates[updateKey] = {};
-      updates[updateKey][key] = programme;
-    }
-  };
-  
   for(let programme of programmes){
-    let programmeKey = programme.Faculty + programme.Degree2 + programme.Programme;
-
-    programme.CSECMandatory.split(',')
-    .concat(programme.CSECAny1of.split(','))
-    .concat(programme.CSECAny2of.split(','))
-    .concat(programme.CSECAny3of.split(','))
-    .concat(programme.CSECAny4of.split(','))
-    .concat(programme.CSECAny5of.split(','))
-    .map(subject => subject.trim().replace('.', ''))
-    .filter(subject => subject)
-    .forEach(subject => addToUpdates('CSEC', subject, programmeKey, programme));
-
-    programme.CAPEMandatory.split(',')
-    .concat(programme.CAPEAny1of.split(','))
-    .concat(programme.CAPEAny2of.split(','))
-    .concat(programme.CAPEAny3of.split(','))
-    .concat(programme.CAPEAny4of.split(','))
-    .concat(programme.CAPEAny5of.split(','))
-    .map(subject => subject.trim().replace('.', ''))
-    .filter(subject => subject)
-    .forEach(subject => addToUpdates('CAPE', subject, programmeKey, programme));
+    search = makeSearchIndex('CSEC', programme, search);
+    search = makeSearchIndex('CAPE', programme, search);
   }
 
-  return database.ref('/search').set(updates);
+  return database.ref('/search').set(search);
 });
 
 exports.newUser = functions.auth.user().onCreate(event => {
-    let user = event.data;
-    let { uid, email } = user;
-    return database.ref(`/users/${uid}`).update({
-      uid: uid,
-      emial: email,
-      name: `User ${uid}`
-    });
+  let user = event.data;
+  let { uid, email } = user;
+  return database.ref(`/users/${uid}`).update({
+    uid: uid,
+    emial: email,
+    name: `User ${uid}`
   });
+});
