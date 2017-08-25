@@ -121,10 +121,10 @@ function makeSearchIndex(type: string, programme: Programme, search: object) : o
   let programmeKey = programme.Faculty + programme.Degree2 + programme.Programme;
   return programme[`${type}Mandatory`].split(',')
   .concat(programme[`${type}Any1of`].split(','))
-  .concat(programme[`${type}Any1of`].split(','))
-  .concat(programme[`${type}Any1of`].split(','))
-  .concat(programme[`${type}Any1of`].split(','))
-  .concat(programme[`${type}Any1of`].split(','))
+  .concat(programme[`${type}Any2of`].split(','))
+  .concat(programme[`${type}Any3of`].split(','))
+  .concat(programme[`${type}Any4of`].split(','))
+  .concat(programme[`${type}Any5of`].split(','))
   .map(subject => subject.trim().replace('.', ''))
   .filter(subject => subject)
   .reduce((search, subject) => {
