@@ -19,7 +19,7 @@ import { RowValidator } from './validators/validators'
  */
 function cleanProgrammeValues(programme: Programme) : Programme{
   for(let x in programme) {
-    if(typeof(programme[x]) !== 'string' && isNaN(programme[x])) delete programme[x];
+    if(typeof(programme[x]) !== 'string' && isNaN(programme[x])) programme[x] = 0;
   }
   return programme;
 }
@@ -59,7 +59,7 @@ function createProgrammeFromRow(row: Row): Programme {
 }
 
 /**
- * Parse the csv
+ * Parse the csv, and generate the programmes and errors for the file
  * @param csv 
  */
 function parseCSV(csv: string) : Promise<void>{
@@ -117,9 +117,16 @@ expressApp.post('/upload_csv', multer.single('csv'), (request, response, next) =
 
 exports.uploadCSV_https = functions.https.onRequest(expressApp);
 
+/**
+ * Take the subjects of the programme passed and add them to the search index 
+ * @param type The type of the subject i.e. CSEC or CAPE
+ * @param programme The programme to add to the search index
+ * @param search The search index to add to
+ * @returns The updated search index
+ */
 function makeSearchIndex(type: string, programme: Programme, search: object) : object {
   let programmeKey = programme.Faculty + programme.Degree2 + programme.Programme;
-  return programme[`${type}Mandatory`].split(',')
+  return  programme[`${type}Mandatory`].split(',')
   .concat(programme[`${type}Any1of`].split(','))
   .concat(programme[`${type}Any2of`].split(','))
   .concat(programme[`${type}Any3of`].split(','))
@@ -137,6 +144,10 @@ function makeSearchIndex(type: string, programme: Programme, search: object) : o
   }, search);
 }
 
+/**
+ * Process the Programmes location in the database.
+ * Create the search index for all of the programmes based on their subjects
+ */
 exports.uploadCSVPostProcess = functions.database.ref('/Programmes').onWrite(event => {
   if(!event.data.exists()) return;
 
